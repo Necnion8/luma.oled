@@ -48,7 +48,7 @@ from luma.oled.device.framebuffer_mixin import __framebuffer_mixin
 __all__ = [
     "ssd1306", "ssd1309", "ssd1322", "ssd1362", "ssd1322_nhd", "ssd1325",
     "ssd1327", "ssd1331", "ssd1351", "sh1106", "sh1107", "ws0010",
-    "winstar_weh"
+    "winstar_weh", "ssd1322_zjy",
 ]
 
 
@@ -588,6 +588,33 @@ class ssd1322(greyscale_device):
         self._serial_interface.command(cmd)
         if len(args) > 0:
             self._serial_interface.data(list(args))
+
+
+class ssd1322_zjy(ssd1322):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._column_offset -= 16
+
+    def _init_sequence(self):
+        self.command(0xFD, 0x12)        # Unlock IC
+        self.command(0xA4)              # Display off (all pixels off)
+        self.command(0xB3, 0xF2)        # Display divide clockratio/freq
+        self.command(0xCA, 0x3F)        # Set MUX ratio
+        self.command(0xA2, 0x00)        # Display offset
+        self.command(0xA1, 0x00)        # Display start Line
+        self.command(0xA0, 0x16, 0x11)  # Set remap & dual COM Line
+        self.command(0xB5, 0x00)        # Set GPIO (disabled)
+        self.command(0xAB, 0x01)        # Function select (internal Vdd)
+        self.command(0xB4, 0xA0, 0xFD)  # Display enhancement A (External VSL)
+        self.command(0xC7, 0x0F)        # Master contrast (reset)
+        self.command(0xB9)              # Set default greyscale table
+        self.command(0xB1, 0xF0)        # Phase length
+        self.command(0xD1, 0x82, 0x20)  # Display enhancement B (reset)
+        self.command(0xBB, 0x0D)        # Pre-charge voltage
+        self.command(0xB6, 0x08)        # 2nd precharge period
+        self.command(0xBE, 0x00)        # Set VcomH
+        self.command(0xA6)              # Normal display (reset)
+        self.command(0xA9)              # Exit partial display
 
 
 class ssd1362(greyscale_device):
